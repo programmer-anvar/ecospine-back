@@ -1,9 +1,13 @@
 const postModel = require("../models/post.model")
+const fileService = require("./file.service")
 
 class PostService {
     async create(post,image){
+        if (!image) {
+            throw new Error("Image is required")
+        }
         const fileName = fileService.save(image)
-        const newPost = await postModel.create(post)
+        const newPost = await postModel.create({...post, image: fileName})
         return newPost
 
     }

@@ -14,10 +14,14 @@ class PostController {
     async create(req,res){
         try {
          console.log(req.files);
+         if (!req.files || !req.files.image) {
+             return res.status(400).json({ error: "Image file is required" })
+         }
          const post = await postService.create(req.body, req.files.image)
          res.status(201).json(post)
          } catch (error) {
-           res.status(500).json(error)
+           console.error("Error creating post:", error)
+           res.status(500).json({ error: error.message })
         }
     }
 

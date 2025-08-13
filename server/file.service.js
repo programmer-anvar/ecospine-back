@@ -5,7 +5,13 @@ const path = require("path");
 class FileService {
     save(file) {
         try {
-            const fileName = uuidv4() + '.jpg'
+            if (!file) {
+                throw new Error("File is required")
+            }
+            
+            // Get file extension from original name
+            const fileExtension = path.extname(file.name) || '.jpg'
+            const fileName = uuidv4() + fileExtension
             const currentDir = __dirname
             const staticDir = path.join(currentDir, "..", "static")
             const filePath = path.join(staticDir, fileName)
@@ -17,7 +23,7 @@ class FileService {
             file.mv(filePath)
             return fileName
         } catch (error) {
-            throw new Error(`error saving file: ${error}`)
+            throw new Error(`Error saving file: ${error.message}`)
         }
     }
 }
