@@ -171,6 +171,7 @@ app.get("/api", (req, res) => {
 		endpoints: {
 			posts: "/api/v1/posts",
 			auth: "/api/v1/auth",
+			categories: "/api/v1/categories",
 			static: "/api/v1/static/:filename",
 		},
 		timestamp: new Date().toISOString(),
@@ -178,8 +179,9 @@ app.get("/api", (req, res) => {
 });
 
 // API v1 routes
-app.use("/api/v1/posts", require("./src/router/post.route"));
+app.use("/api/v1/posts", require("./src/router/advancedPost.route"));
 app.use("/api/v1/auth", require("./src/router/auth.route"));
+app.use("/api/v1/categories", require("./src/router/category.route"));
 
 // API v1 test endpoints (only in development)
 if (process.env.NODE_ENV !== "production") {
