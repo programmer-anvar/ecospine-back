@@ -1,51 +1,88 @@
-const postModel = require("../models/post.model");
 const postService = require("../server/post.service");
+const ApiResponse = require("../utils/response");
 
 class PostController {
-	async getAll(req, res) {
+	async getAll(req, res, next) {
 		try {
 			const allPosts = await postService.getAll();
-			res.status(200).json(allPosts);
+			return ApiResponse.success(
+				res,
+				allPosts,
+				"Posts fetched successfully"
+			);
 		} catch (error) {
-			res.status(500).json(error);
+			console.error("Error fetching posts:", error);
+			next(error);
 		}
 	}
 
-	async create(req, res) {
+	async create(req, res, next) {
 		try {
-			console.log(req.files);
-			const post = await postService.create(req.body, req.files.image);
-			res.status(201).json(post);
+			const image = req.files && req.files.image ? req.files.image : null;
+			const post = await postService.create(req.body, image);
+
+			return ApiResponse.created(res, post, "Post created successfully");
 		} catch (error) {
-			res.status(500).json(error);
+			console.error("Error creating post:", error);
+			next(error);
 		}
 	}
 
-	async delete(req, res) {
+	async getOne(req, res, next) {
 		try {
-			const post = await postService.delete(req.params.id);
-			res.status(200).json(post);
+			const { id } = req.params;
+			const post = await postService.getOne(id);
+
+			if (!post) {
+				return ApiResponse.notFound(res, "Post not found");
+			}
+
+			return ApiResponse.success(res, post, "Post fetched successfully");
 		} catch (error) {
-			res.status(500).json(error);
+			console.error("Error fetching post:", error);
+			next(error);
 		}
 	}
 
-	async edit(req, res) {
+	async edit(req, res, next) {
 		try {
-			const { body, params } = req;
-			const post = await postService.edit(body, params.id);
-			res.status(200).json(post);
+			const { id } = req.params;
+			const updateData = req.body;
+
+			// Handle image update if provided
+			const image = req.files && req.files.image ? req.files.image : null;
+			let post;
+
+			if (image) {
+				post = await postService.updateWithImage(id, updateData, image);
+			} else {
+				post = await postService.edit(updateData, id);
+			}
+
+			if (!post) {
+				return ApiResponse.notFound(res, "Post not found");
+			}
+
+			return ApiResponse.success(res, post, "Post updated successfully");
 		} catch (error) {
-			console.log(error);
+			console.error("Error updating post:", error);
+			next(error);
 		}
 	}
 
-	async getOne(req, res) {
+	async delete(req, res, next) {
 		try {
-			const post = await postService.getOne(req.params.id);
-			res.status(200).json(post);
+			const { id } = req.params;
+			const post = await postService.delete(id);
+
+			if (!post) {
+				return ApiResponse.notFound(res, "Post not found");
+			}
+
+			return ApiResponse.success(res, post, "Post deleted successfully");
 		} catch (error) {
-			res.status(500).json(error);
+			console.error("Error deleting post:", error);
+			next(error);
 		}
 	}
 }
