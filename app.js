@@ -1,48 +1,64 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const fileUpload = require("express-fileupload");
-// const postRoute = require('./router/post.route')
+require('dotenv').config()
+const express = require('express');
+const mongoose = require('mongoose');
+const fileUpload = require('express-fileupload')
+const path = require('path')
+const cors = require('cors')
 
 const app = express();
-app.use(express.json());
-app.use(fileUpload({}));
 
-//Routes
-app.use("/api/post", require("./src/router/post.route"));
+// Simple CORS configuration
+app.use(cors({
+    origin: true, // Allow all origins for development
+    credentials: true
+}));
 
-app.get("/", async (req, res) => {
-	try {
-		const allPosts = await postModel.find();
-		res.status(200).json(allPosts);
-	} catch (error) {
-		res.status(500).json(error);
-	}
+app.use(express.json())
+app.use(fileUpload({
+    createParentPath: true,
+    limits: { 
+        fileSize: 10 * 1024 * 1024 // 10MB max file size
+    },
+    abortOnLimit: true,
+    debug: true
+}))
+app.use('/static', express.static(path.join(__dirname, 'static')))
+
+// Test CORS endpoint
+app.get('/api/test-cors', (req, res) => {
+    res.json({ 
+        message: 'CORS is working!', 
+        timestamp: new Date().toISOString(),
+        origin: req.headers.origin 
+    });
 });
 
-app.delete("/:id", (req, res) => {
-	const { id } = req.params;
-	res.send(id);
+// Test file upload endpoint
+app.post('/api/test-upload', (req, res) => {
+    console.log('Test upload - Request body:', req.body);
+    console.log('Test upload - Request files:', req.files);
+    console.log('Test upload - Files keys:', req.files ? Object.keys(req.files) : 'No files');
+    
+    res.json({
+        message: 'Test upload endpoint',
+        body: req.body,
+        files: req.files ? Object.keys(req.files) : 'No files',
+        timestamp: new Date().toISOString()
+    });
 });
-const PORT = process.env.PORT || 8080;
 
-app.put("/:id", (req, res) => {
-	const { id } = req.params;
-	const body = req.body;
-	res.json({ id, body });
-});
+// Routes
+app.use('/api/post', require('./router/post.route'))
 
-const bootsrap = async () => {
-	try {
-		await mongoose
-			.connect(process.env.DB_URL)
-			.then(() => console.log("Connected DB"));
-		app.listen(PORT, () =>
-			console.log(`Listening on - http://localhost:${PORT}`)
-		);
-	} catch (error) {
-		console.log(`Error conncting with DB:${error}`);
-	}
-};
+const PORT = process.env.PORT || 8080
 
-bootsrap();
+const bootstrap = async () => {
+    try {
+        await mongoose.connect(process.env.DB_URL).then(() => console.log("Connected DB"))
+        app.listen(PORT, () => console.log(`Listening on - http://localhost:${PORT}`))
+    } catch(error) {
+        console.log(`Error connecting with DB: ${error}`); 
+    }
+}
+
+bootstrap()
