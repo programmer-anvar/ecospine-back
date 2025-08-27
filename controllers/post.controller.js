@@ -13,12 +13,21 @@ class PostController {
 
     async create(req,res){
         try {
-         console.log(req.files);
-         if (!req.files || !req.files.image) {
-             return res.status(400).json({ error: "Image file is required" })
+         console.log('Request body:', req.body);
+         console.log('Request files:', req.files);
+         console.log('Files keys:', req.files ? Object.keys(req.files) : 'No files');
+         
+         let postData = {...req.body};
+         
+         // Agar rasm yuklangan bo'lsa
+         if (req.files && req.files.image) {
+             const post = await postService.createWithImage(req.body, req.files.image)
+             res.status(201).json(post)
+         } else {
+             // Rasm yuklanmagan bo'lsa, oddiy post yaratish
+             const post = await postService.create(req.body, null)
+             res.status(201).json(post)
          }
-         const post = await postService.create(req.body, req.files.image)
-         res.status(201).json(post)
          } catch (error) {
            console.error("Error creating post:", error)
            res.status(500).json({ error: error.message })
@@ -37,10 +46,12 @@ class PostController {
     async edit(req, res){
         try{
             const {body, params} = req
-            const post = await postService.edit(body, params.id)
+            
+            const post = await postService.updateWithImage(params.id, body, req.files?.image)
             res.status(200).json(post)
         }catch(error){
             console.log(error);
+            res.status(500).json({ error: error.message })
         }
     }
 

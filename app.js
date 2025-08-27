@@ -14,7 +14,14 @@ app.use(cors({
 }));
 
 app.use(express.json())
-app.use(fileUpload({}))
+app.use(fileUpload({
+    createParentPath: true,
+    limits: { 
+        fileSize: 10 * 1024 * 1024 // 10MB max file size
+    },
+    abortOnLimit: true,
+    debug: true
+}))
 app.use('/static', express.static(path.join(__dirname, 'static')))
 
 // Test CORS endpoint
@@ -23,6 +30,20 @@ app.get('/api/test-cors', (req, res) => {
         message: 'CORS is working!', 
         timestamp: new Date().toISOString(),
         origin: req.headers.origin 
+    });
+});
+
+// Test file upload endpoint
+app.post('/api/test-upload', (req, res) => {
+    console.log('Test upload - Request body:', req.body);
+    console.log('Test upload - Request files:', req.files);
+    console.log('Test upload - Files keys:', req.files ? Object.keys(req.files) : 'No files');
+    
+    res.json({
+        message: 'Test upload endpoint',
+        body: req.body,
+        files: req.files ? Object.keys(req.files) : 'No files',
+        timestamp: new Date().toISOString()
     });
 });
 
